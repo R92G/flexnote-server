@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
+  // uncomment next line if you use Prisma <5.10
+  // directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum Plan {
+  FREE
+  BASIC
+  PREMIUM
+}
+
+model User {
+  id                      String          @id @default(cuid())
+  name                    String?
+  company                 String?
+  email                   String?          @unique
+  emailVerified           DateTime?
+  image                   String?
+  password                String?
+  role                    UserRole        @default(USER)
+  plan                    Plan            @default(FREE)
+  accounts                Account[]
+  websites                Website[]
+  payments                Payment[]
+  isTwoFactorEnabled      Boolean          @default(false)
+  twoFactorConfirmation   TwoFactorConfirmation?
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  userId      String
+  amount      Int
+  plan        Plan
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Website {
+  id                  String    @id @default(cuid())
+  name                String
+  url                 String
+  userId              String
+  notifications       Notification[]
+  createdAt           DateTime  @default(now())
+
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model VerificationToken {
+  id String @id @default(cuid())
+  email String
+  token String @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model PasswordResetToken {
+  id String @id @default(cuid())
+  email String
+  token String @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model TwoFactorToken {
+  id String @id @default(cuid())
+  email String
+  token String @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model TwoFactorConfirmation {
+  id String @id @default(cuid())
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+}
+
+model Notification {
+  id            String    @id @default(cuid())
+  name          String    // Naam van de notificatie
+  websiteId     String    // Koppeling naar de Website model
+  isActive      Boolean   @default(true) // Zorgt dat de notificatie getoond wordt
+  imgUrl        String?   // Optionele URL naar de afbeelding, kan een Cloudinary URL zijn
+  message       String    // Bericht dat getoond moet worden in de notificatie
+  link          String    // Link waar de gebruiker naartoe geleid moet worden na klikken op notificatie
+  sender        String    // Informatie over wie of wat de notificatie verstuurt
+  page          String    // Pagina waar de notificatie getoond moet worden
+  showTimeInMs  Int       @default(3000) // Tijd dat de notificatie getoond moet worden in ms
+  delayInMs     Int       @default(3000) // Tijd dat de notificatie moet wachten voordat deze getoond wordt in ms
+  createdAt     DateTime  @default(now()) // Tijd van creatie van de notificatie
+  website       Website   @relation(fields: [websiteId], references: [id], onDelete: Cascade) // Zorgt dat de notificatie verwijderd wordt als de website verwijderd wordt
+} 
