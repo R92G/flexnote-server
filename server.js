@@ -3,7 +3,6 @@ const http = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
-const { link } = require("fs");
 const prisma = new PrismaClient();
 
 const app = express();
