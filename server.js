@@ -59,11 +59,19 @@ io.on("connection", (socket) => {
 
       // Stuur relevante notificaties naar de gebruiker met de forEach methode
       websiteWithNotifications.notifications.forEach((notification) => {
-        const { id, imgUrl, sender, message, link, showTimeInMs, delayInMs } =
-          notification;
+        const {
+          id,
+          imgUrl,
+          isActive,
+          sender,
+          message,
+          link,
+          showTimeInMs,
+          delayInMs,
+        } = notification;
 
         // Controleer of de notificatie al aan deze gebruiker is getoond tijdens deze sessie
-        if (!displayedNotifications[socket.id]?.includes(id)) {
+        if (!displayedNotifications[socket.id]?.includes(id) && isActive) {
           // Stuur de notificatie naar de gebruiker
           socket.emit("notification", {
             imgUrl,
